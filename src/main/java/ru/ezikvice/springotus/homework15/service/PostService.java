@@ -5,9 +5,13 @@ import ru.ezikvice.springotus.homework15.domain.Parcel;
 
 @Service
 public class PostService {
-    public Parcel reportReceiving(Parcel parcel) {
-        parcel.setWeight(parcel.getWeight() * 0.8);
-        System.out.printf("----- parcel #%s with weight=%f received!", parcel.getNumber(), parcel.getWeight());
+    public Parcel reportSending(Parcel parcel) {
+        System.out.printf("----- parcel #%s with weight=%f send!", parcel.getNumber(), parcel.getWeight());
+        return parcel;
+    }
+
+    public Parcel acceptParcel(Parcel parcel) {
+        System.out.printf("----- parcel #%s with weight=%f accepted!", parcel.getNumber(), parcel.getWeight());
         return parcel;
     }
 }

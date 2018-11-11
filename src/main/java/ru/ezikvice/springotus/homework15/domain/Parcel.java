@@ -11,5 +11,6 @@ public class Parcel {
 
     private double weight;
     private int number;
-    private String address;
+    private String description;
+    private boolean urgent;
 }
