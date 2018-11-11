@@ -15,8 +15,10 @@ import org.springframework.integration.scheduling.PollerMetadata;
 import org.springframework.stereotype.Component;
 import ru.ezikvice.springotus.homework15.domain.Parcel;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class Homework15Application {
@@ -60,6 +62,15 @@ public class Homework15Application {
                                         )
                                         .subFlowMapping(false, sf -> sf
                                                 .handle("postService", "acceptParcel")
+                                                .aggregate(aggregator -> aggregator
+                                                        .outputProcessor(g ->
+                                                                new ArrayList(g.getMessages()
+                                                                        .stream()
+                                                                        .map(message -> (Parcel) message.getPayload())
+                                                                        .collect(Collectors.toList())))
+                                                        .correlationStrategy(m -> 42)
+
+                                                )
                                                 .handle("postService", "reportSending")
                                         )
                         )
