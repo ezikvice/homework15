@@ -69,6 +69,7 @@ public class Homework15Application {
                                                                         .map(message -> (Parcel) message.getPayload())
                                                                         .collect(Collectors.toList())))
                                                         .correlationStrategy(m -> 42)
+                                                        .releaseStrategy(group -> group.getMessages().size()>=2)
 
                                                 )
                                                 .handle("postService", "reportSending")
