@@ -4,21 +4,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.integration.annotation.Aggregator;
-import org.springframework.integration.annotation.CorrelationStrategy;
+import org.springframework.integration.aggregator.DefaultAggregatingMessageGroupProcessor;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.Pollers;
 import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.integration.scheduling.PollerMetadata;
-import org.springframework.stereotype.Component;
 import ru.ezikvice.springotus.homework15.domain.Parcel;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class Homework15Application {
@@ -29,16 +25,16 @@ public class Homework15Application {
 
         List<Parcel> parcels = Arrays.asList(
                 new Parcel(1.5, 1, "a new smartphone", false),
-                new Parcel(2.7, 2, "little dog", false),
-                new Parcel(17.0, 3, "big dog", false),
-                new Parcel(8.0, 4, "other dog", false),
+                new Parcel(3.0, 2, "little dog", false),
+                new Parcel(8.0, 3, "big dog", false),
+                new Parcel(4.0, 4, "other dog", false),
                 new Parcel(1.7, 5, "little cat", false),
+                new Parcel(1.7, 6, "other little cat", false),
                 new Parcel(0.1, 0, "a letter to grandpa in country", true)
         );
 
         for (Parcel parcel : parcels) {
-            Parcel receivedParcel = shipping.sendParcel(parcel);
-            System.out.println("====== " + receivedParcel.toString());
+            shipping.sendParcel(parcel);
         }
     }
 
@@ -61,18 +57,23 @@ public class Homework15Application {
                                                 .handle("postService", "reportSending")
                                         )
                                         .subFlowMapping(false, sf -> sf
-                                                .handle("postService", "acceptParcel")
-                                                .aggregate(aggregator -> aggregator
-                                                        .outputProcessor(g ->
-                                                                new ArrayList(g.getMessages()
-                                                                        .stream()
-                                                                        .map(message -> (Parcel) message.getPayload())
-                                                                        .collect(Collectors.toList())))
-                                                        .correlationStrategy(m -> 42)
-                                                        .releaseStrategy(group -> group.getMessages().size()>=2)
-
-                                                )
-                                                .handle("postService", "reportSending")
+                                                        .handle("postService", "acceptParcel")
+                                                        // "..За время пути
+//                                              // Собачка могла подрасти.."
+                                                        .<Parcel, Parcel>transform(p -> {
+                                                            String description = p.getDescription();
+                                                            if (description.contains("little dog")) {
+                                                                p.setWeight(p.getWeight() * 4);
+                                                                p.setDescription(description.replace("little", "bigger"));
+                                                            }
+                                                            return p;
+                                                        })
+                                                        .aggregate(aggregator -> aggregator
+                                                                .outputProcessor(new DefaultAggregatingMessageGroupProcessor())
+                                                                .correlationStrategy(m -> 42)
+                                                                .releaseStrategy(group -> group.getMessages().size() >= 6)
+                                                        )
+                                                        .handle("postService", "reportReceivingList")
                                         )
                         )
                         .get()
@@ -83,20 +84,5 @@ public class Homework15Application {
     public DirectChannel parcelsChannel() {
         return MessageChannels.direct().datatype(Parcel.class).get();
     }
-
-
-//    @Component
-//    public static class ParcelAggregator {
-//        @Aggregator
-//        public List<Parcel>output(Parcel parcel) {
-//            return ;
-//        }
-//
-//        @CorrelationStrategy
-//        public Integer correlation(Parcel parcel) {
-//            return 42;
-//        }
-//    }
-
 
 }

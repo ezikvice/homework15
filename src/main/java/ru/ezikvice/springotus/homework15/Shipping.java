@@ -7,5 +7,5 @@ import ru.ezikvice.springotus.homework15.domain.Parcel;
 @MessagingGateway
 public interface Shipping {
     @Gateway(requestChannel = "parcelsChannel")
-    Parcel sendParcel(Parcel parcel);
+    void sendParcel(Parcel parcel);
 }
